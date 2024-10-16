@@ -65,7 +65,7 @@ impl Network {
         if errors.len() != self.shape[self.shape.len() - 1] {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
-                "Invalid input shape"
+                "Invalid error shape"
             ));
         }
 
