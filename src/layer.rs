@@ -4,10 +4,22 @@ use rand::Rng;
 use std::io;
 use super::activation_function;
 
-pub struct Layer {
+pub trait Layer {
+    fn get_input_size(&self) -> usize;
+    fn get_output_size(&self) -> usize;
+
+    fn forward(&mut self, inputs: &Vec<f64>) -> Result<Vec<f64>, io::Error>;
+    fn backward(
+        &mut self,
+        errors: &Vec<f64>,
+        learning_rate: f64
+    ) -> Result<Vec<f64>, io::Error>;
+}
+
+pub struct DenseLayer {
     pub input_size: usize,
     pub output_size: usize,
-    
+
     pub inputs: Vec<f64>,
     pub outputs: Vec<f64>,
     cache: Vec<f64>,
@@ -17,7 +29,7 @@ pub struct Layer {
     activation_function: Box<dyn activation_function::ActivationFunction>
 }
 
-impl Layer {
+impl DenseLayer {
     pub fn new(
         input_size: usize,
         output_size: usize,
@@ -29,7 +41,7 @@ impl Layer {
             weights.push(rng.gen());
         }
 
-        return Layer{
+        return DenseLayer{
             input_size,
             output_size,
             inputs: vec![0.0; input_size],
@@ -38,20 +50,27 @@ impl Layer {
             weights,
             bias: vec![0.0; output_size],
             activation_function
-        }; 
+        };
+    }
+}
+
+impl Layer for DenseLayer {
+    fn get_input_size(&self) -> usize {
+        return self.input_size;
     }
 
-    pub fn forward(&mut self, inputs: &Vec<f64>) -> Result<(), io::Error> {
+    fn get_output_size(&self) -> usize {
+        return self.output_size;
+    }
+
+    fn forward(&mut self, inputs: &Vec<f64>) -> Result<Vec<f64>, io::Error> {
         if inputs.len() != self.input_size {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
                 "Invalid input shape."
             ));
         }
-
-        for i in 0..self.input_size {
-            self.inputs[i] = inputs[i];
-        }
+        self.inputs = inputs.clone();
 
         for i in 0..self.output_size {
             self.outputs[i] = self.bias[i];
@@ -63,10 +82,10 @@ impl Layer {
             self.outputs[i] = self.activation_function.normal(self.outputs[i]);
         }
 
-        return Ok(());
+        return Ok(self.outputs.clone());
     }
 
-    pub fn backward(
+    fn backward(
         &mut self,
         errors: &Vec<f64>,
         learning_rate: f64
@@ -85,7 +104,7 @@ impl Layer {
                     learning_rate;
 
             for j in 0..self.input_size {
-                result[j] += errors[i] * 
+                result[j] += errors[i] *
                     self.activation_function.derivative(self.cache[i]) *
                     self.weights[i * self.input_size + j];
 
@@ -97,5 +116,68 @@ impl Layer {
         }
 
         return Ok(result);
+    }
+}
+
+pub struct SoftmaxLayer {
+    pub input_size: usize,
+
+    pub inputs: Vec<f64>,
+    pub outputs: Vec<f64>
+}
+
+impl SoftmaxLayer {
+    pub fn new(input_size: usize) -> Self {
+        return SoftmaxLayer{
+            input_size,
+            inputs: vec![0.0; input_size],
+            outputs: vec![0.0; input_size]
+        };
+    }
+}
+
+impl Layer for SoftmaxLayer {
+    fn get_input_size(&self) -> usize {
+        return self.input_size;
+    }
+
+    fn get_output_size(&self) -> usize {
+        return self.input_size;
+    }
+
+    fn forward(&mut self, inputs: &Vec<f64>) -> Result<Vec<f64>, io::Error> {
+        if inputs.len() != self.input_size {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Invalid input shape."
+            ));
+        }
+        self.inputs = inputs.clone();
+
+        let mut total: f64 = 0.0;
+        for i in 0..self.input_size {
+            total += inputs[i];
+        }
+
+        for i in 0..self.input_size {
+            self.outputs[i] = inputs[i] / total;
+        }
+
+        return Ok(self.outputs.clone());
+    }
+
+    fn backward(
+        &mut self,
+        errors: &Vec<f64>,
+        _learning_rate: f64
+    ) -> Result<Vec<f64>, io::Error> {
+        if self.input_size != errors.len() {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Invalid error shape."
+            ));
+        }
+
+        return Ok(errors.clone());
     }
 }
