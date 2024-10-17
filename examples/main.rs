@@ -1,8 +1,8 @@
 use rustflow;
 
-use std::io;
-use std::fs;
 use csv;
+use std::fs;
+use std::io;
 
 use rand;
 use rand::seq::SliceRandom;
@@ -52,12 +52,21 @@ fn arg_max(values: Vec<f64>) -> usize {
 fn main() {
     let (inputs, outputs) = load_iris("examples/iris.csv").unwrap();
     let layers: Vec<Box<dyn rustflow::layer::Layer>> = vec![
-        Box::new(rustflow::layer::DenseLayer::new(4, 3, Box::new(rustflow::activation_function::LeakyRelu))),
-        Box::new(rustflow::layer::DenseLayer::new(3, 3, Box::new(rustflow::activation_function::Sigmoid))),
+        Box::new(rustflow::layer::DenseLayer::new(
+            4,
+            3,
+            Box::new(rustflow::activation_function::LeakyRelu),
+        )),
+        Box::new(rustflow::layer::DenseLayer::new(
+            3,
+            3,
+            Box::new(rustflow::activation_function::Sigmoid),
+        )),
         Box::new(rustflow::layer::SoftmaxLayer::new(3)),
     ];
 
-    let mut model = rustflow::network::Network::new(layers, Box::new(rustflow::error_function::LogErr));
+    let mut model =
+        rustflow::network::Network::new(layers, Box::new(rustflow::error_function::LogErr));
     let _ = model.train(&inputs, &outputs, 1000, 0.01).unwrap();
 
     let mut correct = 0;
