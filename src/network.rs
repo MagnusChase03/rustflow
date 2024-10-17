@@ -88,15 +88,18 @@ impl Network {
             ));
         }
 
-        for _ in 0..epochs {
+        for e in 0..epochs {
+            let mut total_error = 0.0;
             for i in 0..inputs.len() {
                 let pred = self.forward(&inputs[i])?;
                 let mut errors: Vec<f64> = Vec::new();
                 for j in 0..outputs[i].len() {
                     errors.push(self.error_function.derivative(pred[j], outputs[i][j]));
+                    total_error += self.error_function.normal(pred[j], outputs[i][j]);
                 }
                 let _ = self.backward(&errors, learning_rate)?;
             }
+            println!("[Epoch {}] Error: {}", e, total_error);
         }
 
         return Ok(());
