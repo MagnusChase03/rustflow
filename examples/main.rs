@@ -52,8 +52,8 @@ fn arg_max(values: Vec<f64>) -> usize {
 fn main() {
     let (inputs, outputs) = load_iris("examples/iris.csv").unwrap();
     let layers: Vec<Box<dyn rustflow::layer::Layer>> = vec![
-        Box::new(rustflow::layer::DenseLayer::new(4, 4, Box::new(rustflow::activation_function::LeakyRelu))),
-        Box::new(rustflow::layer::DenseLayer::new(4, 3, Box::new(rustflow::activation_function::Sigmoid))),
+        Box::new(rustflow::layer::DenseLayer::new(4, 3, Box::new(rustflow::activation_function::LeakyRelu))),
+        Box::new(rustflow::layer::DenseLayer::new(3, 3, Box::new(rustflow::activation_function::Sigmoid))),
         Box::new(rustflow::layer::SoftmaxLayer::new(3)),
     ];
 

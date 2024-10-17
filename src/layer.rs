@@ -34,7 +34,7 @@ impl DenseLayer {
         let mut rng = rand::thread_rng();
         let mut weights: Vec<f64> = Vec::new();
         for _ in 0..output_size * input_size {
-            weights.push(rng.gen());
+            weights.push(rng.gen::<f64>() / 100.0);
         }
 
         return DenseLayer {

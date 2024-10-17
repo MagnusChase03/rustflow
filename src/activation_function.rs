@@ -7,14 +7,14 @@ pub struct LeakyRelu;
 impl ActivationFunction for LeakyRelu {
     fn normal(&self, x: f64) -> f64 {
         if x < 0.0 {
-            return 0.1 * x;
+            return 0.01 * x;
         }
         return x;
     }
 
     fn derivative(&self, x: f64) -> f64 {
         if x < 0.0 {
-            return 0.1;
+            return 0.01;
         }
         return 1.0;
     }
