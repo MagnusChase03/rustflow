@@ -11,25 +11,26 @@ fn load_iris(filepath: &str) -> Result<(Vec<Vec<f64>>, Vec<Vec<f64>>), io::Error
     let mut inputs: Vec<Vec<f64>> = Vec::new();
     let mut outputs: Vec<Vec<f64>> = Vec::new();
 
-    let f = fs::File::open(filepath)?;
-    let mut rdr = csv::ReaderBuilder::new().from_reader(f);
+    let file = fs::File::open(filepath)?;
+    let mut reader = csv::ReaderBuilder::new().from_reader(file);
 
-    let mut row: usize = 0;
-    for line in rdr.records() {
-        let mut col = 0;
-        let record = line?;
-        inputs.push(Vec::new());
-        outputs.push(vec![0.0, 0.0, 0.0]);
-        for value in record.iter() {
-            let num = value.parse::<f64>().unwrap();
+    for result in reader.records() {
+        let record = result?;
+
+        let mut input_row = Vec::new();
+        let mut output_row = vec![0.0; 3];
+
+        for (col, value) in record.iter().enumerate() {
+            let parsed_value: f64 = value.parse().unwrap();
             if col == 4 {
-                outputs[row][num as usize] = 1.0;
+                output_row[parsed_value as usize] = 1.0;
             } else {
-                inputs[row].push(num);
+                input_row.push(parsed_value);
             }
-            col += 1;
         }
-        row += 1;
+
+        inputs.push(input_row);
+        outputs.push(output_row);
     }
 
     return Ok((inputs, outputs));
