@@ -4,9 +4,6 @@ use csv;
 use std::fs;
 use std::io;
 
-use rand;
-use rand::seq::SliceRandom;
-
 fn load_iris(filepath: &str) -> Result<(Vec<Vec<f64>>, Vec<Vec<f64>>), io::Error> {
     let mut inputs: Vec<Vec<f64>> = Vec::new();
     let mut outputs: Vec<Vec<f64>> = Vec::new();
