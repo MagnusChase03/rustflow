@@ -1,6 +1,5 @@
 use std::io;
 
-use super::activation_function;
 use super::error_function;
 use super::layer;
 
