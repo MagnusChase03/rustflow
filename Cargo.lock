@@ -89,7 +89,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rgan"
+name = "rustflow"
 version = "0.1.0"
 dependencies = [
  "rand",

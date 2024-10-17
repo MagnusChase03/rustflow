@@ -1,19 +1,15 @@
 use rand;
 use rand::Rng;
 
-use std::io;
 use super::activation_function;
+use std::io;
 
 pub trait Layer {
     fn get_input_size(&self) -> usize;
     fn get_output_size(&self) -> usize;
 
     fn forward(&mut self, inputs: &Vec<f64>) -> Result<Vec<f64>, io::Error>;
-    fn backward(
-        &mut self,
-        errors: &Vec<f64>,
-        learning_rate: f64
-    ) -> Result<Vec<f64>, io::Error>;
+    fn backward(&mut self, errors: &Vec<f64>, learning_rate: f64) -> Result<Vec<f64>, io::Error>;
 }
 
 pub struct DenseLayer {
@@ -26,14 +22,14 @@ pub struct DenseLayer {
     pub weights: Vec<f64>,
     pub bias: Vec<f64>,
 
-    activation_function: Box<dyn activation_function::ActivationFunction>
+    activation_function: Box<dyn activation_function::ActivationFunction>,
 }
 
 impl DenseLayer {
     pub fn new(
         input_size: usize,
         output_size: usize,
-        activation_function: Box<dyn activation_function::ActivationFunction>
+        activation_function: Box<dyn activation_function::ActivationFunction>,
     ) -> Self {
         let mut rng = rand::thread_rng();
         let mut weights: Vec<f64> = Vec::new();
@@ -41,7 +37,7 @@ impl DenseLayer {
             weights.push(rng.gen());
         }
 
-        return DenseLayer{
+        return DenseLayer {
             input_size,
             output_size,
             inputs: vec![0.0; input_size],
@@ -49,7 +45,7 @@ impl DenseLayer {
             cache: vec![0.0; output_size],
             weights,
             bias: vec![0.0; output_size],
-            activation_function
+            activation_function,
         };
     }
 }
@@ -67,7 +63,7 @@ impl Layer for DenseLayer {
         if inputs.len() != self.input_size {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
-                "Invalid input shape."
+                "Invalid input shape.",
             ));
         }
         self.inputs = inputs.clone();
@@ -75,8 +71,7 @@ impl Layer for DenseLayer {
         for i in 0..self.output_size {
             self.outputs[i] = self.bias[i];
             for j in 0..self.input_size {
-                self.outputs[i] += inputs[j] *
-                    self.weights[i * self.input_size + j];
+                self.outputs[i] += inputs[j] * self.weights[i * self.input_size + j];
             }
             self.cache[i] = self.outputs[i];
             self.outputs[i] = self.activation_function.normal(self.outputs[i]);
@@ -85,33 +80,28 @@ impl Layer for DenseLayer {
         return Ok(self.outputs.clone());
     }
 
-    fn backward(
-        &mut self,
-        errors: &Vec<f64>,
-        learning_rate: f64
-    ) -> Result<Vec<f64>, io::Error> {
+    fn backward(&mut self, errors: &Vec<f64>, learning_rate: f64) -> Result<Vec<f64>, io::Error> {
         if self.output_size != errors.len() {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
-                "Invalid error shape."
+                "Invalid error shape.",
             ));
         }
 
         let mut result = vec![0.0; self.input_size];
         for i in 0..self.output_size {
-            self.bias[i] -= errors[i] *
-                    self.activation_function.derivative(self.cache[i]) *
-                    learning_rate;
+            self.bias[i] -=
+                errors[i] * self.activation_function.derivative(self.cache[i]) * learning_rate;
 
             for j in 0..self.input_size {
-                result[j] += errors[i] *
-                    self.activation_function.derivative(self.cache[i]) *
-                    self.weights[i * self.input_size + j];
+                result[j] += errors[i]
+                    * self.activation_function.derivative(self.cache[i])
+                    * self.weights[i * self.input_size + j];
 
-                self.weights[i * self.input_size + j] -= errors[i] *
-                    self.activation_function.derivative(self.cache[i]) *
-                    self.inputs[j] *
-                    learning_rate;
+                self.weights[i * self.input_size + j] -= errors[i]
+                    * self.activation_function.derivative(self.cache[i])
+                    * self.inputs[j]
+                    * learning_rate;
             }
         }
 
@@ -123,15 +113,15 @@ pub struct SoftmaxLayer {
     pub input_size: usize,
 
     pub inputs: Vec<f64>,
-    pub outputs: Vec<f64>
+    pub outputs: Vec<f64>,
 }
 
 impl SoftmaxLayer {
     pub fn new(input_size: usize) -> Self {
-        return SoftmaxLayer{
+        return SoftmaxLayer {
             input_size,
             inputs: vec![0.0; input_size],
-            outputs: vec![0.0; input_size]
+            outputs: vec![0.0; input_size],
         };
     }
 }
@@ -149,7 +139,7 @@ impl Layer for SoftmaxLayer {
         if inputs.len() != self.input_size {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
-                "Invalid input shape."
+                "Invalid input shape.",
             ));
         }
         self.inputs = inputs.clone();
@@ -166,15 +156,11 @@ impl Layer for SoftmaxLayer {
         return Ok(self.outputs.clone());
     }
 
-    fn backward(
-        &mut self,
-        errors: &Vec<f64>,
-        _learning_rate: f64
-    ) -> Result<Vec<f64>, io::Error> {
+    fn backward(&mut self, errors: &Vec<f64>, _learning_rate: f64) -> Result<Vec<f64>, io::Error> {
         if self.input_size != errors.len() {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
-                "Invalid error shape."
+                "Invalid error shape.",
             ));
         }
 

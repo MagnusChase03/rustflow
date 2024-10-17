@@ -26,7 +26,7 @@ impl ErrorFunction for LogErr {
         } else if y == 0.0 {
             return -(1.0 - x).ln();
         }
-        panic!("Invalid output class"); 
+        panic!("Invalid output class");
     }
 
     fn derivative(&self, x: f64, y: f64) -> f64 {
@@ -39,6 +39,6 @@ impl ErrorFunction for LogErr {
         } else if y == 0.0 {
             return 1.0 / (1.0 - x);
         }
-        panic!("Invalid output class"); 
+        panic!("Invalid output class");
     }
 }
