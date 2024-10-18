@@ -6,6 +6,8 @@ use super::layer;
 pub struct Network {
     pub inputs: Vec<f64>,
     pub outputs: Vec<f64>,
+    pub input_size: usize,
+    pub output_size: usize,
 
     layers: Vec<Box<dyn layer::Layer>>,
     error_function: Box<dyn error_function::ErrorFunction>,
@@ -16,16 +18,21 @@ impl Network {
         layers: Vec<Box<dyn layer::Layer>>,
         error_function: Box<dyn error_function::ErrorFunction>,
     ) -> Self {
+        let input_size: usize = layers[0].get_input_size();
+        let output_size: usize = layers[layers.len() - 1].get_output_size();
+
         return Network {
-            inputs: vec![0.0; layers[0].get_input_size()],
-            outputs: vec![0.0; layers[layers.len() - 1].get_output_size()],
+            inputs: vec![0.0; input_size],
+            outputs: vec![0.0; output_size],
+            input_size,
+            output_size,
             layers,
             error_function,
         };
     }
 
     pub fn forward(&mut self, inputs: &Vec<f64>) -> Result<Vec<f64>, io::Error> {
-        if inputs.len() != self.layers[0].get_input_size() {
+        if inputs.len() != self.input_size {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
                 "Invalid input shape",
@@ -42,12 +49,12 @@ impl Network {
         return Ok(self.outputs.clone());
     }
 
-    pub fn backward(
+    fn backward(
         &mut self,
         errors: &Vec<f64>,
         learning_rate: f64,
     ) -> Result<Vec<f64>, io::Error> {
-        if errors.len() != self.layers[self.layers.len() - 1].get_output_size() {
+        if errors.len() != self.output_size {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
                 "Invalid error shape",
@@ -71,7 +78,7 @@ impl Network {
         epochs: usize,
         learning_rate: f64,
     ) -> Result<(), io::Error> {
-        if inputs.len() < 1 || inputs[0].len() != self.layers[0].get_input_size() {
+        if inputs.len() < 1 || inputs[0].len() != self.input_size {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
                 "Invalid input shape",
@@ -79,7 +86,7 @@ impl Network {
         }
 
         if outputs.len() < 1
-            || outputs[0].len() != self.layers[self.layers.len() - 1].get_output_size()
+            || outputs[0].len() != self.output_size
             || outputs.len() != inputs.len()
         {
             return Err(io::Error::new(
