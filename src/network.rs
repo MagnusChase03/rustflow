@@ -49,7 +49,7 @@ impl Network {
         return Ok(self.outputs.clone());
     }
 
-    fn backward(
+    pub fn backward(
         &mut self,
         errors: &Vec<f64>,
         learning_rate: f64,
