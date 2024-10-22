@@ -34,7 +34,7 @@ impl DenseLayer {
         let mut rng = rand::thread_rng();
         let mut weights: Vec<f64> = Vec::new();
         for _ in 0..output_size * input_size {
-            weights.push(rng.gen::<f64>() / 100.0);
+            weights.push(rng.gen::<f64>() / 1000.0);
         }
 
         return DenseLayer {
@@ -75,6 +75,10 @@ impl Layer for DenseLayer {
             }
             self.cache[i] = self.outputs[i];
             self.outputs[i] = self.activation_function.normal(self.outputs[i]);
+
+            if self.outputs[i].is_nan() || self.cache[i].is_nan() {
+                panic!("[ERROR] NaN result {:?} {:?}", self.weights, self.inputs);
+            }
         }
 
         return Ok(self.outputs.clone());
@@ -90,18 +94,18 @@ impl Layer for DenseLayer {
 
         let mut result = vec![0.0; self.input_size];
         for i in 0..self.output_size {
-            self.bias[i] -=
-                errors[i] * self.activation_function.derivative(self.cache[i]) * learning_rate;
-
+            let gradient = errors[i] * self.activation_function.derivative(self.cache[i]);
+            self.bias[i] -= gradient * learning_rate;
             for j in 0..self.input_size {
-                result[j] += errors[i]
-                    * self.activation_function.derivative(self.cache[i])
-                    * self.weights[i * self.input_size + j];
+                result[j] += gradient * self.weights[i * self.input_size + j];
 
-                self.weights[i * self.input_size + j] -= errors[i]
-                    * self.activation_function.derivative(self.cache[i])
+                self.weights[i * self.input_size + j] -= gradient
                     * self.inputs[j]
                     * learning_rate;
+
+                if self.weights[i * self.input_size + j].is_nan() {
+                    panic!("[ERROR] NaN result {:?} {:?} {:?} {:?}", gradient, errors, self.cache, self.inputs);
+                }
             }
         }
 
@@ -146,11 +150,11 @@ impl Layer for SoftmaxLayer {
 
         let mut total: f64 = 0.0;
         for i in 0..self.input_size {
-            total += inputs[i];
+            total += inputs[i].exp();
         }
 
         for i in 0..self.input_size {
-            self.outputs[i] = inputs[i] / total;
+            self.outputs[i] = inputs[i].exp() / total;
         }
 
         return Ok(self.outputs.clone());
@@ -164,6 +168,14 @@ impl Layer for SoftmaxLayer {
             ));
         }
 
-        return Ok(errors.clone());
+        let mut result = vec![0.0; self.input_size];
+        for i in 0..self.input_size {
+            result[i] += errors[i] * self.outputs[i] * (1.0 - self.outputs[i]);
+            if result[i].is_nan() {
+                panic!("[ERROR] NaN result {:?} {:?}", errors, self.inputs);
+            }
+        }
+
+        return Ok(result);
     }
 }

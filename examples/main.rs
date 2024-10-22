@@ -58,14 +58,14 @@ fn main() {
         Box::new(rustflow::layer::DenseLayer::new(
             3,
             3,
-            Box::new(rustflow::activation_function::Sigmoid),
+            Box::new(rustflow::activation_function::LeakyRelu),
         )),
         Box::new(rustflow::layer::SoftmaxLayer::new(3)),
     ];
 
     let mut model =
         rustflow::network::Network::new(layers, Box::new(rustflow::error_function::LogErr));
-    let _ = model.train(&inputs, &outputs, 1000, 0.01).unwrap();
+    let _ = model.train(&inputs, &outputs, 1000, 1e-2).unwrap();
 
     let mut correct = 0;
     for i in 0..inputs.len() {
